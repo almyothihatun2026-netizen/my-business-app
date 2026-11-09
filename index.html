@@ -1,1 +1,278 @@
 
+
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Business App</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Arial,sans-serif;
+ background:#f1f5f9;
+ color:#172554;
+}
+header{
+ background:#17365d;
+ color:white;
+ padding:24px 18px;
+ border-radius:0 0 22px 22px;
+}
+header h2{margin:0 0 8px}
+header p{margin:0;color:#dbeafe}
+main{padding:16px;max-width:700px;margin:auto}
+.cards{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:12px;
+}
+.card{
+ background:white;
+ padding:16px;
+ border-radius:14px;
+ box-shadow:0 2px 8px #0001;
+}
+.card small{color:#64748b}
+.card h2{font-size:20px;color:#2563eb}
+section{
+ background:white;
+ padding:18px;
+ border-radius:14px;
+ margin-top:16px;
+}
+input,button{
+ width:100%;
+ padding:13px;
+ margin-top:10px;
+ border-radius:9px;
+ font-size:15px;
+}
+input{border:1px solid #cbd5e1}
+button{
+ border:0;
+ background:#2563eb;
+ color:white;
+ font-weight:bold;
+ cursor:pointer;
+}
+.delete{background:#dc2626}
+.item{
+ padding:13px 0;
+ border-bottom:1px solid #eee;
+}
+.item button{margin-top:8px}
+nav{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+nav button{
+ width:auto;
+ flex:1;
+ font-size:13px;
+ padding:12px 6px;
+}
+.active{background:#0f766e}
+.page{display:none}
+.page.show{display:block}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>My Business</h2>
+<p>စီးပွားရေး စီမံခန့်ခွဲမှု App</p>
+</header>
+
+<main>
+
+<nav>
+<button class="active" onclick="showPage('home',this)">ပင်မ</button>
+<button onclick="showPage('product',this)">ပစ္စည်း</button>
+<button onclick="showPage('history',this)">အရောင်း</button>
+</nav>
+
+<div id="home" class="page show">
+<h3>လုပ်ငန်းအခြေအနေ</h3>
+<div class="cards">
+<div class="card">
+<small>စုစုပေါင်း အရောင်း</small>
+<h2 id="sales">0 Ks</h2>
+</div>
+<div class="card">
+<small>စုစုပေါင်း အမြတ်</small>
+<h2 id="profit">0 Ks</h2>
+</div>
+<div class="card">
+<small>ကုန်ပစ္စည်းအရေအတွက်</small>
+<h2 id="stock">0</h2>
+</div>
+<div class="card">
+<small>အရောင်းအကြိမ်</small>
+<h2 id="records">0</h2>
+</div>
+</div>
+</div>
+
+<div id="product" class="page">
+<section>
+<h3>ကုန်ပစ္စည်းအသစ်ထည့်ရန်</h3>
+<input id="name" placeholder="ကုန်ပစ္စည်းအမည်">
+<input id="cost" type="number" min="0" placeholder="အရင်းဈေး">
+<input id="price" type="number" min="1" placeholder="ရောင်းဈေး">
+<input id="qty" type="number" min="1" placeholder="အရေအတွက်">
+<button onclick="addProduct()">ပစ္စည်းထည့်မည်</button>
+</section>
+
+<section>
+<h3>ကုန်ပစ္စည်းစာရင်း</h3>
+<div id="products"></div>
+</section>
+</div>
+
+<div id="history" class="page">
+<section>
+<h3>အရောင်းမှတ်တမ်း</h3>
+<div id="salesHistory"></div>
+</section>
+</div>
+
+</main>
+
+<script>
+let products=JSON.parse(
+ localStorage.getItem("myProducts")||"[]"
+);
+let sales=JSON.parse(
+ localStorage.getItem("mySales")||"[]"
+);
+
+function save(){
+ localStorage.setItem(
+  "myProducts",JSON.stringify(products)
+ );
+ localStorage.setItem(
+  "mySales",JSON.stringify(sales)
+ );
+ render();
+}
+
+function money(n){
+ return Number(n).toLocaleString("en-US")+" Ks";
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ })[c]);
+}
+
+function addProduct(){
+ let name=document.getElementById("name").value.trim();
+ let cost=Number(document.getElementById("cost").value);
+ let price=Number(document.getElementById("price").value);
+ let qty=Number(document.getElementById("qty").value);
+
+ if(!name||cost<0||price<=0||qty<=0||
+ !Number.isInteger(qty)){
+  alert("အချက်အလက်များ မှန်ကန်စွာဖြည့်ပါ");
+  return;
+ }
+
+ products.push({name,cost,price,qty});
+
+ document.getElementById("name").value="";
+ document.getElementById("cost").value="";
+ document.getElementById("price").value="";
+ document.getElementById("qty").value="";
+
+ save();
+ alert("ပစ္စည်းထည့်ပြီးပါပြီ");
+}
+
+function sell(i){
+ let p=products[i];
+
+ if(p.qty<=0){
+  alert("ပစ္စည်းလက်ကျန်မရှိပါ");
+  return;
+ }
+
+ p.qty--;
+
+ sales.push({
+  name:p.name,
+  price:p.price,
+  profit:p.price-p.cost,
+  date:new Date().toLocaleString()
+ });
+
+ save();
+ alert("အရောင်းမှတ်တမ်း သိမ်းပြီးပါပြီ");
+}
+
+function removeProduct(i){
+ if(!confirm("ဒီပစ္စည်းကို ဖျက်မှာ သေချာပါသလား?"))return;
+ products.splice(i,1);
+ save();
+}
+
+function showPage(id,btn){
+ document.querySelectorAll(".page").forEach(p=>{
+  p.classList.remove("show");
+ });
+ document.getElementById(id).classList.add("show");
+
+ document.querySelectorAll("nav button").forEach(b=>{
+  b.classList.remove("active");
+ });
+ btn.classList.add("active");
+}
+
+function render(){
+ let total=sales.reduce((s,x)=>s+x.price,0);
+ let profit=sales.reduce((s,x)=>s+x.profit,0);
+ let stock=products.reduce((s,p)=>s+p.qty,0);
+
+ document.getElementById("sales").textContent=money(total);
+ document.getElementById("profit").textContent=money(profit);
+ document.getElementById("stock").textContent=stock;
+ document.getElementById("records").textContent=sales.length;
+
+ document.getElementById("products").innerHTML=
+ products.map((p,i)=>`
+ <div class="item">
+ <b>${escapeHTML(p.name)}</b><br>
+ အရင်း - ${money(p.cost)}<br>
+ ရောင်းဈေး - ${money(p.price)}<br>
+ လက်ကျန် - ${p.qty}
+ <button onclick="sell(${i})">တစ်ခုရောင်းမည်</button>
+ <button class="delete" onclick="removeProduct(${i})">ပစ္စည်းဖျက်မည်</button>
+ </div>
+ `).join("")||"ပစ္စည်းမရှိသေးပါ";
+
+ document.getElementById("salesHistory").innerHTML=
+ sales.slice().reverse().map(s=>`
+ <div class="item">
+ <b>${escapeHTML(s.name)}</b><br>
+ အရောင်း - ${money(s.price)}<br>
+ အမြတ် - ${money(s.profit)}<br>
+ <small>${escapeHTML(s.date)}</small>
+ </div>
+ `).join("")||"အရောင်းမှတ်တမ်းမရှိသေးပါ";
+}
+
+render();
+</script>
+
+</body>
+</html>
